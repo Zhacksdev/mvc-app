@@ -18,8 +18,8 @@ app/
 │   ├── AuthController.php
 │   └── TaskController.php
 ├── Models/
-│   ├── User.php
-│   └── Task.php
+│   ├── UserModel.php
+│   └── TaskModel.php
 ├── Views/
 │   ├── auth/
 │   │   ├── login.php
