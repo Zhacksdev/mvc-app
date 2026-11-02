@@ -2,12 +2,12 @@
 
 // ===================================================================
 // KONFIGURASI DATABASE
-// GANTI BAGIAN INI SESUAI PENGATURAN LOKAL KAMU
+// Membaca environment variable dengan fallback lokal
 // ===================================================================
-$dbHost = '127.0.0.1'; // atau 'localhost'
-$dbName = 'todolist'; // <-- GANTI NAMA DATABASE KAMU
-$dbUser = 'root'; // <-- GANTI USERNAME DB KAMU
-$dbPass = ''; // <-- GANTI PASSWORD DB KAMU
+$dbHost  = getenv('DB_HOST') ?: '127.0.0.1';
+$dbName  = getenv('DB_NAME') ?: 'todolist';
+$dbUser  = getenv('DB_USER') ?: 'root';
+$dbPass  = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 $charset = 'utf8mb4';
 
 // ===================================================================
@@ -29,10 +29,16 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
+// Opsi SSL saat DB_HOST terisi (diperlukan untuk Azure Database for MySQL)
+if (!empty(getenv('DB_HOST'))) {
+    $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
+    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+}
+
 try {
     // 1. Buat koneksi PDO
     $pdo = new PDO($dsn, $dbUser, $dbPass, $options);
-    echo "Koneksi ke database '{$dbName}' berhasil! <br><hr>";
+    echo "Koneksi ke database '{$dbName}' berhasil! <br><hr>\n";
 
     // 2. MIGRASI: Definisikan SQL untuk membuat tabel
     $sqlMigration = "
@@ -54,6 +60,7 @@ try {
           `deskripsi_tugas` TEXT NOT NULL,
           `status` ENUM('pending','completed') NOT NULL DEFAULT 'pending',
           `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
           PRIMARY KEY (`id`),
           KEY `user_id` (`user_id`),
           CONSTRAINT `tasks_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -62,7 +69,7 @@ try {
 
     // 3. Eksekusi skrip Migrasi
     $pdo->exec($sqlMigration);
-    echo "<b>Migrasi berhasil:</b> Tabel 'users' dan 'tasks' sukses dibuat.<br>";
+    echo "<b>Migrasi berhasil:</b> Tabel 'users' dan 'tasks' sukses dibuat.<br>\n";
 
     // 4. SEEDING: Masukkan data 'users' menggunakan Prepared Statements
     $stmtUser = $pdo->prepare("INSERT INTO `users` (username, password, nama) VALUES (?, ?, ?)");
@@ -76,7 +83,7 @@ try {
     foreach ($users as $user) {
         $stmtUser->execute($user);
     }
-    echo "<b>Seeding berhasil:</b> 3 user (john.doe, jane.doe, budi) ditambahkan. Password: '{$plainPassword}'<br>";
+    echo "<b>Seeding berhasil:</b> 3 user (john.doe, jane.doe, budi) ditambahkan. Password: '{$plainPassword}'<br>\n";
     
     // 5. SEEDING: Masukkan data 'tasks'
     // Kita bisa pakai exec() lagi untuk query multi-line
@@ -92,12 +99,9 @@ try {
     ";
     
     $pdo->exec($sqlSeedTasks);
-    echo "<b>Seeding berhasil:</b> Data tasks untuk user 'john.doe' dan 'jane.doe' ditambahkan.<br>";
-    echo "<hr>✅ <b>SEMUA SELESAI!</b> Database kamu sudah siap digunakan.";
-
+    echo "<b>Seeding berhasil:</b> Data tasks untuk user 'john.doe' dan 'jane.doe' ditambahkan.<br>\n";
+    echo "<hr>✅ <b>SEMUA SELESAI!</b> Database kamu sudah siap digunakan.\n";
 
 } catch (PDOException $e) {
     echo "Gagal melakukan migrasi/seeding: <br>" . $e->getMessage();
 }
-
-?>

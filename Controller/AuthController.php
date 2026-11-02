@@ -15,7 +15,7 @@ class AuthController
             exit;
         }
 
-        $username = htmlspecialchars(trim($_POST['username'] ?? ''));
+        $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
         if ($username === '' || $password === '') {
@@ -24,19 +24,25 @@ class AuthController
             exit;
         }
 
-        $userModel = new User();
-        $user = $userModel->findByUsername($username);
+        try {
+            $userModel = new User();
+            $user = $userModel->findByUsername($username);
 
-        if ($user && password_verify($password, $user['password'])) {
-            // Regenerate session ID untuk keamanan
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_nama'] = $user['nama'];
-            unset($_SESSION['error']);
+            if ($user && password_verify($password, $user['password'])) {
+                // Regenerate session ID untuk keamanan
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_nama'] = $user['nama'];
+                unset($_SESSION['error']);
 
-            header('Location: index.php?route=task');
-        } else {
-            $_SESSION['error'] = 'Username atau password salah.';
+                header('Location: index.php?route=task');
+            } else {
+                $_SESSION['error'] = 'Username atau password salah.';
+                header('Location: index.php?route=login');
+            }
+        } catch (Throwable $e) {
+            error_log("Login error: " . $e->getMessage());
+            $_SESSION['error'] = 'Terjadi kesalahan sistem. Silakan coba beberapa saat lagi.';
             header('Location: index.php?route=login');
         }
         exit;
@@ -50,7 +56,7 @@ class AuthController
         session_unset();
         session_destroy();
 
-        // Hapus cookie session (opsional)
+        // Hapus cookie session
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,

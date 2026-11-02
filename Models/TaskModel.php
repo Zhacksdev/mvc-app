@@ -79,7 +79,7 @@ class Task
     public function create(int $user_id, string $deskripsi): bool
     {
         try {
-            $deskripsi = htmlspecialchars(trim($deskripsi));
+            $deskripsi = trim($deskripsi);
             $stmt = $this->db->prepare("
                 INSERT INTO {$this->table} (user_id, deskripsi_tugas, status)
                 VALUES (:user_id, :deskripsi, 'pending')
@@ -98,7 +98,7 @@ class Task
     public function update(int $id, int $user_id, array $data): bool
     {
         try {
-            $deskripsi = htmlspecialchars(trim($data['deskripsi'] ?? ''));
+            $deskripsi = trim($data['deskripsi'] ?? '');
             $status = $data['status'] ?? 'pending';
 
             // validasi status agar sesuai ENUM

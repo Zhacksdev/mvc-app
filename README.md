@@ -1,57 +1,57 @@
-# 🗂️ PHP To-Do List — Implementasi Arsitektur VMC
+# 🗂️ PHP To-Do List — Implementasi Arsitektur MVC
 
-Proyek ini adalah contoh implementasi **VMC (View-Model-Controller)** sederhana menggunakan **PHP Native** dan **Bootstrap**.  
-Aplikasi ini memiliki fitur utama **autentikasi login pengguna** serta **pengelolaan daftar tugas (To-Do List)**.
+Proyek ini adalah implementasi **MVC (Model-View-Controller)** menggunakan **PHP Native** dan **Bootstrap 5**.  
+Aplikasi ini memiliki fitur utama **autentikasi login pengguna** serta **pengelolaan daftar tugas (To-Do List)** yang siap di-deploy ke **Microsoft Azure App Service**.
 
 ---
 
-## 🧩 Arsitektur VMC
+## 🧩 Arsitektur Aplikasi
 
-Struktur proyek ini mengikuti pola **VMC (View-Model-Controller)**:
-- **Model** → Berisi logika database (misalnya `User.php` dan `Task.php`)
-- **Controller** → Menangani request dari user dan berinteraksi dengan Model & View
-- **View** → Menampilkan halaman antarmuka (HTML + Bootstrap)
+Struktur direktori proyek mengikuti pola MVC:
+- **Models** → Berisi logika data dan query database (`UserModel.php`, `TaskModel.php`)
+- **Controller** → Menangani request dari user, validasi, dan menghubungkan Model dengan View (`AuthController.php`, `TaskController.php`)
+- **View** → Menampilkan antarmuka pengguna berbasis HTML & Bootstrap (`View/auth/`, `View/task/`)
+- **Database** → Koneksi singleton PDO dan skrip migrasi/seeding (`Connection.php`, `MigrateSeed.php`)
 
 ```plaintext
-app/
-├── Controllers/
+mvc-app/
+├── Controller/
 │   ├── AuthController.php
 │   └── TaskController.php
+├── Database/
+│   ├── Connection.php
+│   └── MigrateSeed.php
 ├── Models/
-│   ├── UserModel.php
-│   └── TaskModel.php
-├── Views/
+│   ├── TaskModel.php
+│   └── UserModel.php
+├── View/
 │   ├── auth/
-│   │   ├── login.php
-│   │   └── register.php
-│   ├── tasks/
-│   │   ├── index.php
-│   │   └── form.php
-│   └── layouts/
-│       └── main.php
-└── Database/
-    └── Connection.php
+│   │   └── login.php
+│   └── task/
+│       ├── edit_task.php
+│       └── task.php
+├── .gitignore
+├── index.php
+└── README.md
 ```
 
 ---
 
 ## ⚙️ Fitur Utama
 
-### 🔐 Autentikasi
-- Login dengan username & password.
-- Logout session pengguna.
-- Validasi user melalui database.
+### 🔐 Autentikasi & Keamanan Sesi
+- Login aman dengan verifikasi `password_hash` (`bcrypt`).
+- Pengaturan cookie sesi (`HttpOnly`, `SameSite=Lax`, dan `Secure` saat menggunakan HTTPS/Azure).
+- Regenerasi ID sesi setelah login berhasil untuk mencegah *session fixation*.
+- Error handling generik ke pengguna dengan detail log tersimpan di `error_log`.
+- Sanitasi input dan proteksi XSS pada output View (`htmlspecialchars`).
 
-### ✅ To-Do List
-- Tambah task baru.
-- Edit dan update task.
-- Toggle status (pending ↔ completed).
-- Hapus task.
-- Filter berdasarkan status (pending / completed).
-
-### 💅 Tampilan (View)
-- Menggunakan **Bootstrap 5** agar tampilan modern dan responsif.
-- UI sederhana dan intuitif.
+### ✅ Pengelolaan Tugas (To-Do List)
+- Tambah tugas baru (metode `POST`).
+- Edit dan perbarui deskripsi serta status tugas (metode `POST`).
+- Toggle status tugas (Pending ↔ Completed) via metode `POST`.
+- Hapus tugas via metode `POST` dengan dialog konfirmasi.
+- Filter tugas berdasarkan status (`all`, `pending`, `completed`).
 
 ---
 
@@ -60,79 +60,75 @@ app/
 | Komponen | Teknologi |
 |-----------|------------|
 | Bahasa Pemrograman | PHP 8+ |
-| Basis Data | MySQL / MariaDB |
-| UI Framework | Bootstrap 5 |
-| Arsitektur | VMC (View-Model-Controller) |
-| ORM | Native PDO (tanpa framework) |
+| Basis Data | MySQL / MariaDB (Mendukung Azure Database for MySQL Flexible Server via SSL) |
+| UI Framework | Bootstrap 5 & Bootstrap Icons |
+| Pola Desain | MVC (Model-View-Controller) |
+| Database Layer | Native PHP PDO (Prepared Statements) |
 
 ---
 
-## 🛠️ Instalasi & Konfigurasi
+## 🛠️ Instalasi & Konfigurasi Lokal
 
 ### 1️⃣ Clone Repositori
 ```bash
-git clone https://github.com/username/php-vmc-todolist.git
-cd php-vmc-todolist
+git clone https://github.com/Zhacksdev/mvc-app.git
+cd mvc-app
 ```
 
-### 2️⃣ Buat Database
-Buat database baru bernama `todolist`.
+### 2️⃣ Siapkan Database Lokal
+Buat database lokal bernama `todolist` di MySQL Anda.
 
 ### 3️⃣ Jalankan Script Migrasi & Seeder
-Jalankan file berikut untuk membuat tabel `users` dan `tasks` serta menambahkan data awal:
+Jalankan perintah berikut untuk membuat tabel `users` dan `tasks` (lengkap dengan `created_at` dan `updated_at`) serta menyisipkan data awal:
 ```bash
-php database/migrate_and_seed.php
+php Database/MigrateSeed.php
 ```
+> ⚠️ **Peringatan:** File ini menjalankan perintah `DROP TABLE`. Jalankan **hanya sekali** saat inisialisasi awal database (termasuk pada database Azure), jangan dijalankan ulang setelah terdapat data penting.
 
-### 4️⃣ Konfigurasi Koneksi Database
-Buka file:
-```
-app/Database/Connection.php
-```
-dan sesuaikan:
-```php
-private static string $host = '127.0.0.1';
-private static string $dbname = 'todolist';
-private static string $username = 'root';
-private static string $password = '';
-```
+### 4️⃣ Konfigurasi Database & Environment Variables
+Aplikasi membaca kredensial database melalui environment variable, dengan fallback default untuk lingkungan lokal:
+
+| Variabel Lingkungan | Nilai Default Lokal | Keterangan |
+|---------------------|---------------------|------------|
+| `DB_HOST` | `127.0.0.1` | Host database MySQL |
+| `DB_NAME` | `todolist` | Nama database |
+| `DB_USER` | `root` | Username database |
+| `DB_PASS` | `(kosong)` | Password database |
 
 ### 5️⃣ Jalankan di Localhost
-Gunakan PHP built-in server:
+Gunakan PHP built-in web server:
 ```bash
 php -S localhost:8000
 ```
-
-Lalu buka di browser:
-```
-http://localhost:8000
-```
+Buka browser pada: `http://localhost:8000`
 
 ---
 
-## 👤 Akun Login Default (Seeder)
-Setelah seeding, kamu bisa login dengan:
+## ☁️ Deployment ke Microsoft Azure
 
-| Username | Password |
-|-----------|-----------|
-| `john.doe` | `password123` |
-| `jane.doe` | `password123` |
-
----
-
-## 📸 Preview Tampilan
-> (Tambahkan screenshot halaman login & todo list jika ada)
+### Konfigurasi Azure App Service
+1. **Application Settings**: Pada portal Azure (**App Service** > **Settings** > **Configuration** > **Application settings**), tambahkan:
+   - `DB_HOST` = `<nama-server-mysql>.mysql.database.azure.com`
+   - `DB_NAME` = `todolist`
+   - `DB_USER` = `<admin-username>`
+   - `DB_PASS` = `<admin-password>`
+2. **Koneksi SSL**: Saat `DB_HOST` diset, aplikasi secara otomatis mengaktifkan SSL dengan sertifikat CA (`/etc/ssl/certs/ca-certificates.crt`) yang kompatibel dengan Azure Database for MySQL.
+3. **Repository GitHub**: Pastikan repository telah diubah status visibilitasnya menjadi **Private** di GitHub sebelum menghubungkan Azure Deployment Center.
 
 ---
 
-## 📚 Catatan Tambahan
+## 🌐 URL Aplikasi Azure & Akun Pengujian
 
-- Menggunakan `PDO` dengan prepared statements untuk keamanan dari SQL Injection.
-- Struktur **VMC** memisahkan antara tampilan, logika bisnis, dan koneksi data untuk memudahkan pengembangan dan perawatan.
-- Semua data user dan task disimpan di database MySQL.
+- **URL Aplikasi**: `https://<nama-aplikasi-anda>.azurewebsites.net`
+- **Akun Uji (Seeder)**:
+  - Username: `john.doe`
+  - Password: `password123`
+  - *(Alternatif)*: `jane.doe` / `password123`, `budi` / `password123`
 
 ---
 
-## 🧑‍💻 Pengembang
-Dibuat oleh **Zhacksdev**  
-Sebagai implementasi sederhana konsep **VMC** dalam PHP Native.
+## 📚 Catatan Keamanan & Arsitektur
+
+- **Prepared Statements**: Seluruh query SQL menggunakan PDO prepared statements dengan parameter binding untuk mencegah SQL Injection.
+- **XSS Protection**: Data teks disimpan murni di database dan di-*escape* menggunakan `htmlspecialchars()` saat ditampilkan pada View.
+- **HTTP Methods**: Operasi yang mengubah data (store, update, toggle, delete) wajib menggunakan metode HTTP `POST` guna mencegah CSRF dan trigger tidak disengaja oleh link prefetching.

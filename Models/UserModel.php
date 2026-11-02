@@ -17,7 +17,7 @@ class User
     {
         try {
             $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE username = :username LIMIT 1");
-            $stmt->execute([':username' => htmlspecialchars(trim($username))]);
+            $stmt->execute([':username' => trim($username)]);
             $user = $stmt->fetch();
             return $user ?: null;
         } catch (PDOException $e) {
@@ -42,8 +42,8 @@ class User
                 VALUES (:nama, :username, :password)
             ");
             return $stmt->execute([
-                ':nama'      => htmlspecialchars(trim($nama)),
-                ':username'  => htmlspecialchars(trim($username)),
+                ':nama'      => trim($nama),
+                ':username'  => trim($username),
                 ':password'  => $hashedPassword
             ]);
         } catch (PDOException $e) {

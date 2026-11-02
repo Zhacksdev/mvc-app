@@ -94,16 +94,20 @@ $tasks = $tasks ?? [];
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-center">
-                                            <a href="index.php?route=task_toggle&id=<?= $task['id']; ?>" class="btn btn-sm btn-outline-success">
-                                                <i class="bi bi-arrow-repeat"></i>
-                                            </a>
+                                            <form action="index.php?route=task_toggle" method="POST" class="d-inline">
+                                                <input type="hidden" name="id" value="<?= $task['id']; ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Ubah status">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                </button>
+                                            </form>
                                             <a href="index.php?route=task_edit&id=<?= $task['id']; ?>"
                                                 class="btn btn-warning btn-sm">
                                                 <i class="bi bi-pencil-fill"></i> Edit
                                             </a>
-                                            <form action="index.php?route=task_delete&id=<?= $task['id']; ?>"
-                                                method="POST" class="form-delete"
+                                            <form action="index.php?route=task_delete"
+                                                method="POST" class="d-inline form-delete"
                                                 onsubmit="return confirm('Yakin hapus tugas ini?');">
+                                                <input type="hidden" name="id" value="<?= $task['id']; ?>">
                                                 <button type="submit" class="btn btn-danger btn-sm">
                                                     <i class="bi bi-trash-fill"></i> Hapus
                                                 </button>

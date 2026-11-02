@@ -48,7 +48,7 @@ if (empty($task) || !isset($task['id'])) {
     <!-- 🔹 Navbar -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="../../tasks">
+            <a class="navbar-brand d-flex align-items-center" href="index.php?route=task">
                 <i class="bi bi-card-checklist me-2"></i> To-Do List
             </a>
         </div>
@@ -107,7 +107,7 @@ if (empty($task) || !isset($task['id'])) {
                             <hr>
 
                             <div class="d-flex justify-content-between">
-                                <a href="../../tasks" class="btn btn-secondary">
+                                <a href="index.php?route=task" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left"></i> Kembali
                                 </a>
                                 <button type="submit" class="btn btn-success">

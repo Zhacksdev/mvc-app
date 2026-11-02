@@ -35,7 +35,7 @@
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-danger" role="alert">
-                    <?= $_SESSION['error'];
+                    <?= htmlspecialchars($_SESSION['error']);
                     unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>

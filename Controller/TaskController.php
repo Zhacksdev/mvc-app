@@ -52,13 +52,17 @@ class TaskController
             exit;
         }
 
-        $deskripsi = htmlspecialchars(trim($_POST['deskripsi'] ?? ''));
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
 
         if ($deskripsi === '') {
             $_SESSION['task_error'] = 'Deskripsi tugas tidak boleh kosong.';
         } else {
-            $this->taskModel->create($this->userId, $deskripsi);
-            $_SESSION['task_success'] = 'Tugas berhasil ditambahkan.';
+            $created = $this->taskModel->create($this->userId, $deskripsi);
+            if ($created) {
+                $_SESSION['task_success'] = 'Tugas berhasil ditambahkan.';
+            } else {
+                $_SESSION['task_error'] = 'Gagal menambahkan tugas.';
+            }
         }
 
         header('Location: index.php?route=task');
@@ -100,12 +104,12 @@ class TaskController
         }
 
         $id = (int) ($_POST['id'] ?? 0);
-        $deskripsi = htmlspecialchars(trim($_POST['deskripsi'] ?? ''));
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
         $status = $_POST['status'] ?? 'pending';
 
         if ($id <= 0 || $deskripsi === '') {
             $_SESSION['task_error'] = 'Deskripsi tidak boleh kosong.';
-            header("Location: index.php?route=edit-task&id={$id}");
+            header("Location: index.php?route=task_edit&id={$id}");
             exit;
         }
 
@@ -114,8 +118,12 @@ class TaskController
             'status' => $status,
         ];
 
-        $this->taskModel->update($id, $this->userId, $data);
-        $_SESSION['task_success'] = 'Tugas berhasil diperbarui.';
+        $updated = $this->taskModel->update($id, $this->userId, $data);
+        if ($updated) {
+            $_SESSION['task_success'] = 'Tugas berhasil diperbarui.';
+        } else {
+            $_SESSION['task_error'] = 'Gagal memperbarui tugas.';
+        }
 
         header('Location: index.php?route=task');
         exit;
@@ -126,11 +134,20 @@ class TaskController
      * =============================== */
     public function toggle(): void
     {
-        $id = (int) ($_GET['id'] ?? 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?route=task');
+            exit;
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
 
         if ($id > 0) {
-            $this->taskModel->toggleStatus($id, $this->userId);
-            $_SESSION['task_success'] = 'Status tugas berhasil diperbarui.';
+            $toggled = $this->taskModel->toggleStatus($id, $this->userId);
+            if ($toggled) {
+                $_SESSION['task_success'] = 'Status tugas berhasil diperbarui.';
+            } else {
+                $_SESSION['task_error'] = 'Gagal memperbarui status tugas.';
+            }
         } else {
             $_SESSION['task_error'] = 'ID tugas tidak valid.';
         }
@@ -144,11 +161,20 @@ class TaskController
      * =============================== */
     public function destroy(): void
     {
-        $id = (int) ($_GET['id'] ?? 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?route=task');
+            exit;
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
 
         if ($id > 0) {
-            $this->taskModel->delete($id, $this->userId);
-            $_SESSION['task_success'] = 'Tugas berhasil dihapus.';
+            $deleted = $this->taskModel->delete($id, $this->userId);
+            if ($deleted) {
+                $_SESSION['task_success'] = 'Tugas berhasil dihapus.';
+            } else {
+                $_SESSION['task_error'] = 'Gagal menghapus tugas.';
+            }
         } else {
             $_SESSION['task_error'] = 'ID tugas tidak valid.';
         }
